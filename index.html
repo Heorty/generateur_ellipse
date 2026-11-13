@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Générateur d'Ellipses de Demande — Bapt'ss</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Audiowide&family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&family=MedievalSharp&family=Orbitron:wght@600;700&family=Playfair+Display:wght@600;700&family=Rochester&family=UnifrakturMaguntia&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <span class="brand-dot"></span>
+          <div>
+            <h1>Générateur d'Ellipses de Demande</h1>
+            <p>Création rapide d'ellipses pour les locaux associatifs</p>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <label class="select-inline">
+            <span>Modèle :</span>
+            <select id="presetSelect">
+              <option value="ahclam">Exemple Ahclam (Visites)</option>
+              <option value="elec">Exemple Élec (Boquette)</option>
+              <option value="ct">Exemple CT (Symboles Trad's)</option>
+            </select>
+          </label>
+          <button id="btnLoadJson" class="btn btn-secondary" title="Charger un fichier projet .json">
+            Importer JSON
+          </button>
+          <input type="file" id="jsonFileInput" accept=".json" hidden />
+          <button id="btnSaveJson" class="btn btn-secondary" title="Sauvegarder le projet en .json">
+            Sauvegarder JSON
+          </button>
+          <button id="btnExportSvg" class="btn btn-primary" title="Exporter en SVG vectoriel (pour Illustrator / .ai)">
+            Exporter SVG
+          </button>
+          <button id="btnExportPptx" class="btn btn-primary" title="Exporter en présentation PowerPoint (.pptx)">
+            Exporter PPTX
+          </button>
+          <button id="btnExportPng" class="btn btn-accent" title="Exporter en image PNG haute résolution">
+            Exporter PNG
+          </button>
+          <button id="btnPrintPdf" class="btn btn-secondary" title="Imprimer ou enregistrer en PDF">
+            PDF
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="sidebar">
+          <nav class="tabs" role="tablist">
+            <button class="tab active" data-tab="zidents">Zidents</button>
+            <button class="tab" data-tab="texts">Textes & Logo</button>
+            <button class="tab" data-tab="fonts">Polices</button>
+            <button class="tab" data-tab="style">Style & Cotes</button>
+          </nav>
+
+          <div class="tab-panels">
+            <!-- TAB: ZIDENTS -->
+            <section class="tab-panel active" id="panel-zidents">
+              <div class="card">
+                <div class="card-header">
+                  <h2>Répartition par fam'ss</h2>
+                </div>
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Tri automatique</span>
+                    <select id="sortMode">
+                      <option value="first-number">Par 1er nombre (ex: 8-139 → 8)</option>
+                      <option value="last-number">Par dernier nombre (ex: 15-106 → 106)</option>
+                      <option value="manual">Ordre manuel (↑ / ↓)</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Disposition</span>
+                    <select id="layoutDirection">
+                      <option value="ccw-top-left">Anneau anti-horaire</option>
+                      <option value="cw-top-left">Anneau horaire</option>
+                      <option value="two-columns">2 colonnes (Gauche / Droite)</option>
+                      <option value="bottom-only">En bas uniquement (sous le logo)</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Rayon horizontal (<span id="valRingX">295</span>)</span>
+                    <input type="range" id="ringRadiusX" min="160" max="360" value="295" />
+                  </label>
+                  <label class="field">
+                    <span>Rayon vertical (<span id="valRingY">142</span>)</span>
+                    <input type="range" id="ringRadiusY" min="80" max="210" value="142" />
+                  </label>
+                </div>
+                <div class="row-actions">
+                  <label class="checkbox-field" style="margin-right: auto; font-size: 12px;">
+                    <input type="checkbox" id="enableSnapGuides" checked />
+                    <span>Guides d'alignement &amp; symétrie</span>
+                  </label>
+                  <button id="btnResortFamss" class="btn btn-secondary btn-sm">
+                    Reclasser par fam'ss
+                  </button>
+                  <button id="btnResetOffsets" class="btn btn-ghost btn-sm">
+                    Réinitialiser les positions manuelles
+                  </button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <h2>Liste des Zidents (<span id="zidentCount">0</span>)</h2>
+                  <div class="header-actions">
+                    <button id="btnToggleBulk" class="btn btn-secondary btn-sm">Import rapide</button>
+                    <button id="btnAddZident" class="btn btn-primary btn-sm">+ Ajouter</button>
+                  </div>
+                </div>
+                <div id="bulkImportBox" class="bulk-box hidden">
+                  <label class="field">
+                    <span>Coller une liste (1 zident par ligne : <code>Buque Fam'ss</code>)</span>
+                    <textarea
+                      id="bulkImportText"
+                      rows="4"
+                      placeholder="Echo 151&#10;aLYONKa 8-139&#10;Goudale 11"
+                    ></textarea>
+                  </label>
+                  <div class="bulk-actions">
+                    <button id="btnBulkAppend" class="btn btn-primary btn-sm">Ajouter à la liste</button>
+                    <button id="btnBulkReplace" class="btn btn-danger btn-sm">Remplacer la liste</button>
+                  </div>
+                </div>
+                <p class="hint">
+                  Astuce : vous pouvez aussi glisser-déposer directement un zident sur l'ellipse à droite pour ajuster sa position.
+                </p>
+                <div id="zidentsList" class="zidents-list"></div>
+              </div>
+            </section>
+
+            <!-- TAB: TEXTS & LOGO -->
+            <section class="tab-panel" id="panel-texts">
+              <div class="card">
+                <h2>Texte du haut (arc supérieur)</h2>
+                <label class="field">
+                  <span>Texte</span>
+                  <input type="text" id="topText" />
+                </label>
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Police</span>
+                    <select id="topTextFont" class="font-select"></select>
+                  </label>
+                  <label class="field">
+                    <span>Taille (<span id="valTopSize">22</span> px)</span>
+                    <input type="range" id="topTextSize" min="12" max="36" value="22" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="card">
+                <h2>Texte du bas (arc inférieur)</h2>
+                <label class="field">
+                  <span>Texte</span>
+                  <input type="text" id="bottomText" />
+                </label>
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Police</span>
+                    <select id="bottomTextFont" class="font-select"></select>
+                  </label>
+                  <label class="field">
+                    <span>Taille (<span id="valBottomSize">22</span> px)</span>
+                    <input type="range" id="bottomTextSize" min="12" max="36" value="22" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="card">
+                <h2>Logo central & Titres centraux</h2>
+                <div class="logo-upload-box">
+                  <button id="btnUploadCenterLogo" class="btn btn-secondary btn-sm">
+                    Importer un logo central (PNG, SVG, JPG)
+                  </button>
+                  <button id="btnClearCenterLogo" class="btn btn-ghost btn-sm">Retirer</button>
+                  <input type="file" id="centerLogoInput" accept="image/*" hidden />
+                </div>
+                <div class="grid-3">
+                  <label class="field">
+                    <span>Largeur (<span id="valLogoW">160</span>)</span>
+                    <input type="range" id="centerLogoWidth" min="40" max="360" value="160" />
+                  </label>
+                  <label class="field">
+                    <span>Hauteur (<span id="valLogoH">140</span>)</span>
+                    <input type="range" id="centerLogoHeight" min="40" max="280" value="140" />
+                  </label>
+                  <label class="field">
+                    <span>Décalage Y (<span id="valLogoY">-10</span>)</span>
+                    <input type="range" id="centerLogoOffsetY" min="-100" max="100" value="-10" />
+                  </label>
+                </div>
+
+                <label class="field">
+                  <span>Texte au-dessus du logo (optionnel)</span>
+                  <input type="text" id="centerTopLabel" placeholder="Ex: TRÈS VÉNÉRABLE" />
+                </label>
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Police</span>
+                    <select id="centerTopLabelFont" class="font-select"></select>
+                  </label>
+                  <label class="field">
+                    <span>Taille (<span id="valCenterTopSize">20</span>)</span>
+                    <input type="range" id="centerTopLabelSize" min="10" max="42" value="20" />
+                  </label>
+                </div>
+
+                <label class="field">
+                  <span>Texte sous le logo (optionnel)</span>
+                  <input type="text" id="centerBottomLabel" placeholder="Ex: du Tabagn's de Clun's" />
+                </label>
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Police</span>
+                    <select id="centerBottomLabelFont" class="font-select"></select>
+                  </label>
+                  <label class="field">
+                    <span>Taille (<span id="valCenterBottomSize">24</span>)</span>
+                    <input type="range" id="centerBottomLabelSize" min="10" max="48" value="24" />
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <!-- TAB: FONTS -->
+            <section class="tab-panel" id="panel-fonts">
+              <div class="card">
+                <h2>Importer depuis DaFont (.zip, .ttf, .otf)</h2>
+                <p class="hint">
+                  Police par défaut : <strong>Clunsois</strong>. Cherchez une police sur DaFont, téléchargez son <code>.zip</code> et déposez-le directement ici (sans même le décompresser).
+                </p>
+                <div class="inline-form">
+                  <input type="text" id="dafontSearchInput" placeholder="Rechercher sur DaFont (ex: Clunsois)..." />
+                  <button id="btnSearchDafont" class="btn btn-secondary">DaFont ↗</button>
+                </div>
+                <div id="fontDropzone" class="font-dropzone">
+                  <span>Glissez un fichier <code>.zip</code> (DaFont) ou <code>.ttf/.otf</code> ici</span>
+                  <button id="btnUploadFont" class="btn btn-primary btn-sm">
+                    Choisir un fichier (.zip, .ttf, .otf, .woff)
+                  </button>
+                  <input type="file" id="fontFileInput" accept=".zip,.ttf,.otf,.woff,.woff2" multiple hidden />
+                </div>
+                <div id="fontUploadStatus" class="hint"></div>
+              </div>
+
+              <div class="card">
+                <h2>Ajouter une Google Font</h2>
+                <p class="hint">
+                  Entrez le nom exact d'une police Google Fonts (ex: <code>Bangers</code>, <code>Montserrat</code>, <code>Creepster</code>, <code>Bebas Neue</code>).
+                </p>
+                <div class="inline-form">
+                  <input type="text" id="googleFontInput" placeholder="Nom de la Google Font..." />
+                  <button id="btnAddGoogleFont" class="btn btn-secondary">Charger</button>
+                </div>
+              </div>
+
+              <div class="card">
+                <h2>Polices disponibles (<span id="fontCount">0</span>)</h2>
+                <ul id="fontsList" class="fonts-list"></ul>
+              </div>
+            </section>
+
+            <!-- TAB: STYLE & COTES -->
+            <section class="tab-panel" id="panel-style">
+              <div class="card">
+                <h2>Couleurs &amp; Dégradés</h2>
+                <div class="grid-2">
+                  <label class="field color-field">
+                    <span>Fond ellipse</span>
+                    <input type="color" id="ellipseColor" value="#000000" />
+                  </label>
+                  <label class="field color-field">
+                    <span>Textes dans l'ellipse (global)</span>
+                    <input type="color" id="textColor" value="#FFFFFF" />
+                  </label>
+                  <label class="field color-field">
+                    <span>Bordure ellipse</span>
+                    <input type="color" id="ellipseBorderColor" value="#000000" />
+                  </label>
+                  <label class="field color-field">
+                    <span>Fond de la planche</span>
+                    <input type="color" id="slideBackgroundColor" value="#FFFFFF" />
+                  </label>
+                </div>
+                <div class="grid-2">
+                  <label class="field color-field">
+                    <span>Couleur texte du haut (opt.)</span>
+                    <input type="color" id="topTextColor" value="#FFFFFF" />
+                  </label>
+                  <label class="field color-field">
+                    <span>Couleur texte du bas (opt.)</span>
+                    <input type="color" id="bottomTextColor" value="#FFFFFF" />
+                  </label>
+                </div>
+
+                <label class="checkbox-field">
+                  <input type="checkbox" id="ellipseUseGradient" />
+                  <span>Activer le dégradé / divisions de couleurs sur l'ellipse</span>
+                </label>
+
+                <div id="ellipseGradientPanel" class="grad-panel hidden">
+                  <div class="grid-2">
+                    <label class="field">
+                      <span>Type</span>
+                      <select id="ellipseGradientType">
+                        <option value="linear">Linéaire</option>
+                        <option value="radial">Radial (centre → bord)</option>
+                      </select>
+                    </label>
+                    <label class="field">
+                      <span>Transition</span>
+                      <select id="ellipseGradientMode">
+                        <option value="smooth">Dégradé doux</option>
+                        <option value="hard-split">Division nette (bandes)</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label class="field" id="ellipseGradAngleWrap">
+                    <span>Angle (<span id="valGradAngle">135</span>°)</span>
+                    <input type="range" id="ellipseGradientAngle" min="0" max="360" value="135" />
+                  </label>
+
+                  <div class="grad-presets">
+                    <button type="button" id="btnGradPreset2" class="btn btn-secondary btn-sm">2 bandes (50/50)</button>
+                    <button type="button" id="btnGradPreset3" class="btn btn-secondary btn-sm">3 bandes</button>
+                    <button type="button" id="btnAddGradStop" class="btn btn-primary btn-sm">+ Couleur</button>
+                  </div>
+
+                  <div id="gradStopsList" class="grad-stops-list"></div>
+                </div>
+              </div>
+
+              <div class="card">
+                <h2>Cotes (Alloufs)</h2>
+                <label class="checkbox-field">
+                  <input type="checkbox" id="showDimensions" checked />
+                  <span>Afficher les cotes (15 alloufs × 10 alloufs)</span>
+                </label>
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Largeur</span>
+                    <input type="text" id="widthLabel" />
+                  </label>
+                  <label class="field">
+                    <span>Hauteur</span>
+                    <input type="text" id="heightLabel" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="card">
+                <h2>Note d'usinage (.ai)</h2>
+                <label class="checkbox-field">
+                  <input type="checkbox" id="showMachiningNote" checked />
+                  <span>Afficher la note .ai sous l'ellipse</span>
+                </label>
+                <label class="field">
+                  <span>Texte de la note</span>
+                  <textarea id="machiningNote" rows="3"></textarea>
+                </label>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <section class="preview-pane">
+          <div class="preview-toolbar">
+            <span>Aperçu en direct (format 16:9 — 15 × 10 alloufs)</span>
+            <span class="preview-hint">Cliquez sur un élément pour le modifier • Glissez un zident (alignement &amp; symétrie)</span>
+          </div>
+          <div class="canvas-wrapper">
+            <svg
+              id="ellipseSvg"
+              viewBox="0 0 1280 720"
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              aria-label="Aperçu de l'ellipse de demande"
+            ></svg>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script defer src="app.js"></script>
+  </body>
+</html>
