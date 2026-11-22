@@ -263,8 +263,21 @@ details[open] .panel-summary::after {
   border-radius: 999px;
 }
 
-/* Dropzone */
+/* Dropzone & accessibilité */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .dropzone {
+  display: block;
   border: 1.5px dashed var(--border-strong);
   border-radius: 8px;
   background: var(--surface-muted);

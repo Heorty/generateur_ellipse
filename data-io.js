@@ -31,14 +31,17 @@
    * Normalise le genre vers "M" (homme -> .onscrit / devenu) ou "F" (femme -> .onscrite / devenue).
    */
   function normalizeGender(raw) {
-    const clean = stripAccents(String(raw || "").trim().toLowerCase());
+    const clean = stripAccents(String(raw || "").trim().toLowerCase()).replace(/\.+$/g, "");
     if (
       clean === "f" ||
+      clean === "fem" ||
       clean === "femme" ||
       clean === "feminin" ||
       clean === "feminine" ||
       clean === "fille" ||
       clean === "female" ||
+      clean === "woman" ||
+      clean === "girl" ||
       clean === "mme" ||
       clean === "mlle" ||
       clean === "madame" ||

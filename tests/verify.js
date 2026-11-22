@@ -1,4 +1,5 @@
 const assert = require("assert");
+const fs = require("fs");
 const path = require("path");
 const opentype = require("../vendor/opentype.min.js");
 const XLSX = require("../vendor/xlsx.full.min.js");
@@ -208,6 +209,37 @@ async function run() {
   assert(files.includes("planche_01_etape2_buque_gravure_decoupe.svg"), "ZIP must include sheet 1 step 2");
   assert(files.includes("planche_02_etape1_nom_gravure.svg"), "ZIP must include sheet 2 step 1");
   assert(files.includes("planche_02_etape2_buque_gravure_decoupe.svg"), "ZIP must include sheet 2 step 2");
+
+  console.log("6. Testing real test.csv import, gender variants, and upload markup...");
+  assert.strictEqual(dataIO.normalizeGender("F."), "F");
+  assert.strictEqual(dataIO.normalizeGender("Mme."), "F");
+  const testCsvPath = path.join(__dirname, "..", "test.csv");
+  const testBuf = fs.readFileSync(testCsvPath);
+  const testItems = dataIO.parseSpreadsheetBuffer(
+    testBuf.buffer.slice(testBuf.byteOffset, testBuf.byteOffset + testBuf.byteLength),
+    "test.csv",
+    XLSX
+  );
+  assert.deepStrictEqual(testItems, [
+    { genre: "M", nom: "vienne", buque: "Echo" },
+    { genre: "M", nom: "barrau", buque: "harold" },
+    { genre: "M", nom: "cure", buque: "Ragnarts" },
+    { genre: "F", nom: "de trogoff", buque: "calypso" }
+  ]);
+  const testLayout = engine.computePlanLayout(testItems, engine.DEFAULT_SETTINGS);
+  assert(!testLayout.error, "test.csv layout should have no error");
+  const testSvg1 = engine.generateSheetSvg(testLayout, 0, 1, opentype, assets);
+  const testSvg2 = engine.generateSheetSvg(testLayout, 0, 2, opentype, assets);
+  assert(!/NaN|Infinity|undefined/i.test(testSvg1 + testSvg2), "test.csv SVGs must contain no NaN/Infinity");
+  assert.strictEqual((testSvg2.match(/<ellipse\b/g) || []).length, 4, "test.csv Step 2 must have 4 cut ellipses");
+
+  const indexHtml = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert(/<input[^>]*id="fileInput"/.test(indexHtml), "index.html must contain #fileInput");
+  assert(/<label[^>]*id="fileDropzone"[^>]*for="fileInput"/.test(indexHtml), "#fileDropzone must be a label[for=fileInput]");
+  assert(!/<label[^>]*id="fileDropzone"[\s\S]*?<input[^>]*id="fileInput"/.test(indexHtml), "#fileInput must not be nested inside #fileDropzone");
+
+  const appJs = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert(!/fileDropzone\.addEventListener\(\s*["']click["']/.test(appJs), "app.js must not attach recursive click listener on fileDropzone");
 
   console.log("ALL VERIFICATION CHECKS PASSED (" + files.length + " files in ZIP).");
 }

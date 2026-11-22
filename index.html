@@ -45,11 +45,16 @@
               <span class="badge" id="badgeRowCount">0</span>
             </div>
 
-            <div class="dropzone" id="fileDropzone" tabindex="0" role="button" aria-label="Importer un fichier Excel ou CSV">
-              <input type="file" id="fileInput" accept=".xlsx,.xls,.ods,.csv,.tsv,.txt" hidden />
+            <input
+              type="file"
+              id="fileInput"
+              class="sr-only"
+              accept=".xlsx,.xls,.ods,.csv,.tsv,.txt,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            />
+            <label class="dropzone" id="fileDropzone" for="fileInput" tabindex="0" aria-label="Importer un fichier Excel ou CSV">
               <div class="dropzone-title">Importer un tableau Excel ou CSV</div>
               <div class="dropzone-sub">Glisser-déposer ici ou cliquer (colonnes <code>genre</code>, <code>nom</code>, <code>buque</code>)</div>
-            </div>
+            </label>
 
             <div class="template-links">
               <span>Modèles :</span>

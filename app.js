@@ -549,10 +549,22 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  function readFileAsArrayBuffer(file) {
+    if (typeof file.arrayBuffer === "function") {
+      return file.arrayBuffer();
+    }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error("Impossible de lire le fichier."));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
   async function handleFileImport(file) {
     if (!file) return;
     try {
-      const buf = await file.arrayBuffer();
+      const buf = await readFileAsArrayBuffer(file);
       const imported = window.DataIO.parseSpreadsheetBuffer(buf, file.name);
       if (!imported.length) {
         showNotice(`Aucune ligne exploitable trouvée dans « ${file.name} ».`, "error");
@@ -570,32 +582,47 @@
   }
 
   function bindEvents() {
-    // Dropzone & File Input
-    els.fileDropzone.addEventListener("click", () => els.fileInput.click());
+    // Empêche le navigateur d'ouvrir/télécharger le fichier si déposé hors de la zone
+    window.addEventListener("dragover", (e) => e.preventDefault());
+    window.addEventListener("drop", (e) => e.preventDefault());
+
+    // Dropzone & File Input (label[for="fileInput"] gère le clic nativement sans récursion)
     els.fileDropzone.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         els.fileInput.click();
       }
     });
-    els.fileInput.addEventListener("change", () => {
-      if (els.fileInput.files && els.fileInput.files[0]) {
-        handleFileImport(els.fileInput.files[0]);
+    els.fileInput.addEventListener("change", async () => {
+      const file = els.fileInput.files && els.fileInput.files[0];
+      if (!file) return;
+      try {
+        await handleFileImport(file);
+      } finally {
         els.fileInput.value = "";
       }
     });
-    els.fileDropzone.addEventListener("dragover", (e) => {
+    els.fileDropzone.addEventListener("dragenter", (e) => {
       e.preventDefault();
       els.fileDropzone.classList.add("is-dragover");
     });
-    els.fileDropzone.addEventListener("dragleave", () => {
-      els.fileDropzone.classList.remove("is-dragover");
-    });
-    els.fileDropzone.addEventListener("drop", (e) => {
+    els.fileDropzone.addEventListener("dragover", (e) => {
       e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+      els.fileDropzone.classList.add("is-dragover");
+    });
+    els.fileDropzone.addEventListener("dragleave", (e) => {
+      if (!e.relatedTarget || !els.fileDropzone.contains(e.relatedTarget)) {
+        els.fileDropzone.classList.remove("is-dragover");
+      }
+    });
+    els.fileDropzone.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       els.fileDropzone.classList.remove("is-dragover");
-      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-        handleFileImport(e.dataTransfer.files[0]);
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) {
+        await handleFileImport(file);
       }
     });
 
