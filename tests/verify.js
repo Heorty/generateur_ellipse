@@ -241,6 +241,54 @@ async function run() {
   const appJs = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert(!/fileDropzone\.addEventListener\(\s*["']click["']/.test(appJs), "app.js must not attach recursive click listener on fileDropzone");
 
+  console.log("7. Testing full Greek alphabet, superscripts (ᵀ), and all 177 rows of import_decoupe_buques.csv...");
+  const greekAndSup = "αβγδεζηθικλμνξοπρςστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩϕϱϖϵϑΩ∆⍴𝜏ᵀᵗ⁴⁰";
+  assert.deepStrictEqual(
+    engine.getMissingCharacters(font, greekAndSup, assets),
+    [],
+    "Full Greek alphabet + variants + superscripts must have 0 missing glyphs"
+  );
+  const dGreek = engine.buildCenteredTextPath(font, greekAndSup, 20, 70, 20, assets);
+  assert(dGreek.length > 100 && !/NaN|Infinity|undefined/i.test(dGreek), "Full Greek path must be valid");
+
+  const buquesPath = path.join(__dirname, "..", "import_decoupe_buques.csv");
+  if (fs.existsSync(buquesPath)) {
+    const bBuf = fs.readFileSync(buquesPath);
+    const bItems = dataIO.parseSpreadsheetBuffer(
+      bBuf.buffer.slice(bBuf.byteOffset, bBuf.byteOffset + bBuf.byteLength),
+      "import_decoupe_buques.csv",
+      XLSX
+    );
+    assert.strictEqual(bItems.length, 177, "Expected 177 rows in import_decoupe_buques.csv");
+    for (const item of bItems) {
+      assert.deepStrictEqual(
+        engine.getMissingCharacters(font, item.nom, assets),
+        [],
+        `Missing glyph in nom '${item.nom}'`
+      );
+      assert.deepStrictEqual(
+        engine.getMissingCharacters(font, item.buque, assets),
+        [],
+        `Missing glyph in buque '${item.buque}'`
+      );
+      for (const step of [1, 2]) {
+        const face = engine.buildEllipseFaceElements(item, step, engine.DEFAULT_SETTINGS, font, assets);
+        for (const d of face.engravingPaths) {
+          for (const [x, y] of extractAllCoordsFromPathD(d)) {
+            assert((x / rx) ** 2 + (y / ry) ** 2 < 1.0, `Point out of ellipse for '${item.nom}/${item.buque}'`);
+          }
+        }
+      }
+    }
+    const bLayout = engine.computePlanLayout(bItems, engine.DEFAULT_SETTINGS);
+    assert(!bLayout.error, "import_decoupe_buques layout should succeed");
+    for (let i = 0; i < bLayout.sheets.length; i++) {
+      const s1 = engine.generateSheetSvg(bLayout, i, 1, opentype, assets);
+      const s2 = engine.generateSheetSvg(bLayout, i, 2, opentype, assets);
+      assert(!/NaN|Infinity|undefined/i.test(s1 + s2), `Sheet ${i + 1} must have no NaN`);
+    }
+  }
+
   console.log("ALL VERIFICATION CHECKS PASSED (" + files.length + " files in ZIP).");
 }
 

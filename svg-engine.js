@@ -149,32 +149,368 @@
   }
 
   /**
+   * Tables de correspondance pour les exposants, variantes mathématiques et lettres grecques Clun'sois.
+   */
+  const SUPERSCRIPT_MAP = {
+    "\u1D40": { ch: "T", scale: 0.58 }, // ᵀ (t transposé)
+    "\u1D57": { ch: "t", scale: 0.62 }, // ᵗ
+    "\u2070": { ch: "0", scale: 0.58 }, // ⁰
+    "\u2074": { ch: "4", scale: 0.58 }, // ⁴
+    "\u2075": { ch: "5", scale: 0.58 }, // ⁵
+    "\u2076": { ch: "6", scale: 0.58 }, // ⁶
+    "\u2077": { ch: "7", scale: 0.58 }, // ⁷
+    "\u2078": { ch: "8", scale: 0.58 }, // ⁸
+    "\u2079": { ch: "9", scale: 0.58 }, // ⁹
+    "\u207A": { ch: "+", scale: 0.58 }, // ⁺
+    "\u207B": { ch: "-", scale: 0.58 }, // ⁻
+    "\u207C": { ch: "=", scale: 0.58 }, // ⁼
+    "\u207D": { ch: "(", scale: 0.58 }, // ⁽
+    "\u207E": { ch: ")", scale: 0.58 }, // ⁾
+    "\u207F": { ch: "n", scale: 0.62 }, // ⁿ
+    "\u2071": { ch: "i", scale: 0.62 }, // ⁱ
+    "\u1D43": { ch: "a", scale: 0.62 }, // ᵃ
+    "\u1D47": { ch: "b", scale: 0.62 }, // ᵇ
+    "\u1D9C": { ch: "c", scale: 0.62 }, // ᶜ
+    "\u1D48": { ch: "d", scale: 0.62 }, // ᵈ
+    "\u1D49": { ch: "e", scale: 0.62 }, // ᵉ
+    "\u1DA0": { ch: "f", scale: 0.62 }, // ᶠ
+    "\u1D4D": { ch: "g", scale: 0.62 }, // ᵍ
+    "\u02B0": { ch: "h", scale: 0.62 }, // ʰ
+    "\u02B2": { ch: "j", scale: 0.62 }, // ʲ
+    "\u1D4F": { ch: "k", scale: 0.62 }, // ᵏ
+    "\u02E1": { ch: "l", scale: 0.62 }, // ˡ
+    "\u1D50": { ch: "m", scale: 0.62 }, // ᵐ
+    "\u1D52": { ch: "o", scale: 0.62 }, // ᵒ
+    "\u1D56": { ch: "p", scale: 0.62 }, // ᵖ
+    "\u02B3": { ch: "r", scale: 0.62 }, // ʳ
+    "\u02E2": { ch: "s", scale: 0.62 }, // ˢ
+    "\u1D58": { ch: "u", scale: 0.62 }, // ᵘ
+    "\u1D5B": { ch: "v", scale: 0.62 }, // ᵛ
+    "\u02B7": { ch: "w", scale: 0.62 }, // ʷ
+    "\u02E3": { ch: "x", scale: 0.62 }, // ˣ
+    "\u02B8": { ch: "y", scale: 0.62 }, // ʸ
+    "\u1DBB": { ch: "z", scale: 0.62 }, // ᶻ
+    "\u1D2C": { ch: "A", scale: 0.58 }, // ᴬ
+    "\u1D2E": { ch: "B", scale: 0.58 }, // ᴮ
+    "\u1D30": { ch: "D", scale: 0.58 }, // ᴰ
+    "\u1D31": { ch: "E", scale: 0.58 }, // ᴱ
+    "\u1D33": { ch: "G", scale: 0.58 }, // ᴳ
+    "\u1D34": { ch: "H", scale: 0.58 }, // ᴴ
+    "\u1D35": { ch: "I", scale: 0.58 }, // ᴵ
+    "\u1D36": { ch: "J", scale: 0.58 }, // ᴶ
+    "\u1D37": { ch: "K", scale: 0.58 }, // ᴷ
+    "\u1D38": { ch: "L", scale: 0.58 }, // ᴸ
+    "\u1D39": { ch: "M", scale: 0.58 }, // ᴹ
+    "\u1D3A": { ch: "N", scale: 0.58 }, // ᴺ
+    "\u1D3C": { ch: "O", scale: 0.58 }, // ᴼ
+    "\u1D3E": { ch: "P", scale: 0.58 }, // ᴾ
+    "\u1D3F": { ch: "R", scale: 0.58 }, // ᴿ
+    "\u1D41": { ch: "U", scale: 0.58 }, // ᵁ
+    "\u2C7D": { ch: "V", scale: 0.58 }, // ⱽ
+    "\u1D42": { ch: "W", scale: 0.58 }  // ᵂ
+  };
+
+  const SUBSCRIPT_MAP = {
+    "\u2080": { ch: "0", scale: 0.58 },
+    "\u2081": { ch: "1", scale: 0.58 },
+    "\u2082": { ch: "2", scale: 0.58 },
+    "\u2083": { ch: "3", scale: 0.58 },
+    "\u2084": { ch: "4", scale: 0.58 },
+    "\u2085": { ch: "5", scale: 0.58 },
+    "\u2086": { ch: "6", scale: 0.58 },
+    "\u2087": { ch: "7", scale: 0.58 },
+    "\u2088": { ch: "8", scale: 0.58 },
+    "\u2089": { ch: "9", scale: 0.58 }
+  };
+
+  const VARIANT_CHAR_MAP = {
+    "\u2374": "\u03C1", // ⍴ (APL rho) -> ρ
+    "\u03D5": "\u03C6", // ϕ -> φ
+    "\u03F1": "\u03C1", // ϱ -> ρ
+    "\u03D6": "\u03C0", // ϖ -> π
+    "\u2126": "\u03A9", // Ω -> Ω
+    "\u2206": "\u0394", // ∆ -> Δ
+    "\u2205": "\u00D8", // ∅ -> Ø
+    "\u2032": "'",      // ′ -> '
+    "\u2010": "-",
+    "\u2011": "-",
+    "\u2012": "-",
+    "\u2212": "-"
+  };
+
+  // Lettres grecques déjà dessinées dans clunsois_complet.ttf (plan de codage Argadz) + homoglyphes majuscules
+  const CLUNSOIS_GREEK_MAP = {
+    "\u03C6": "\u201A", // φ -> ‚ (#100)
+    "\u03A6": "\u201A", // Φ -> ‚ (#100)
+    "\u03C4": "\u2022", // τ -> • (#99)
+    "\u03C1": "\u0161", // ρ -> š (#120)
+    "\u03C7": "\u20AC", // χ -> € (#98)
+    "\u03A7": "\u20AC", // Χ -> € (#98)
+    "\u03C8": "\u0160", // ψ -> Š (#106)
+    "\u03A8": "\u0160", // Ψ -> Š (#106)
+    "\u03BC": "\u00B5", // μ -> µ (#143)
+    "\u03A0": "\u00DD", // Π -> Ý (#183)
+    "\u03C0": "\u00DE", // π -> Þ (#184)
+    "\u03B2": "\u00DF", // β -> ß (#185)
+    "\u03A9": "\u00FE", // Ω -> þ (#216)
+    "\u0391": "A",      // Α -> A
+    "\u0392": "B",      // Β -> B
+    "\u0395": "E",      // Ε -> E
+    "\u0396": "Z",      // Ζ -> Z
+    "\u0397": "H",      // Η -> H
+    "\u0399": "I",      // Ι -> I
+    "\u039A": "K",      // Κ -> K
+    "\u039C": "M",      // Μ -> M
+    "\u039D": "N",      // Ν -> N
+    "\u039F": "O",      // Ο -> O
+    "\u03A1": "P",      // Ρ -> P
+    "\u03A4": "T",      // Τ -> T
+    "\u03A5": "Y"       // Υ -> Y
+  };
+
+  function resolveCharRuns(font, ch, assets, depth) {
+    const level = depth || 0;
+    const unitsPerEm = font.unitsPerEm || 2048;
+
+    // 1. Glyphe natif Clun'sois
+    const direct = font.charToGlyph(ch);
+    if (direct && direct.index !== 0) {
+      return [
+        {
+          kind: "font",
+          glyph: direct,
+          scale: 1,
+          dyNorm: 0,
+          advanceNorm: (direct.advanceWidth || 0) / unitsPerEm,
+          missing: false
+        }
+      ];
+    }
+
+    // 2. Exposants et indices Unicode (ex. ᵀ t transposé, ⁴..⁹)
+    const sup = SUPERSCRIPT_MAP[ch];
+    if (sup) {
+      const baseGlyph = font.charToGlyph(sup.ch);
+      if (baseGlyph && baseGlyph.index !== 0) {
+        const bb = baseGlyph.getPath(0, 0, 1).getBoundingBox();
+        const topY = Number.isFinite(bb.y1) ? bb.y1 : -0.715;
+        return [
+          {
+            kind: "font",
+            glyph: baseGlyph,
+            scale: sup.scale,
+            dyNorm: -0.719 - topY * sup.scale,
+            advanceNorm: ((baseGlyph.advanceWidth || 0) / unitsPerEm) * sup.scale,
+            missing: false
+          }
+        ];
+      }
+    }
+
+    const sub = SUBSCRIPT_MAP[ch];
+    if (sub) {
+      const baseGlyph = font.charToGlyph(sub.ch);
+      if (baseGlyph && baseGlyph.index !== 0) {
+        return [
+          {
+            kind: "font",
+            glyph: baseGlyph,
+            scale: sub.scale,
+            dyNorm: 0.18,
+            advanceNorm: ((baseGlyph.advanceWidth || 0) / unitsPerEm) * sub.scale,
+            missing: false
+          }
+        ];
+      }
+    }
+
+    // 3. Variantes mathématiques / APL / symboles
+    if (level < 3) {
+      if (VARIANT_CHAR_MAP[ch]) {
+        return resolveCharRuns(font, VARIANT_CHAR_MAP[ch], assets, level + 1);
+      }
+      const cp = ch.codePointAt(0);
+      if (cp >= 0x1d400 && cp <= 0x1d7ff) {
+        const nfkd = ch.normalize("NFKD");
+        if (nfkd && nfkd !== ch) {
+          const out = [];
+          for (const part of Array.from(nfkd)) {
+            out.push(...resolveCharRuns(font, part, assets, level + 1));
+          }
+          return out;
+        }
+      }
+    }
+
+    // 4. Lettres grecques natives de clunsois_complet.ttf
+    if (CLUNSOIS_GREEK_MAP[ch]) {
+      const mappedGlyph = font.charToGlyph(CLUNSOIS_GREEK_MAP[ch]);
+      if (mappedGlyph && mappedGlyph.index !== 0) {
+        return [
+          {
+            kind: "font",
+            glyph: mappedGlyph,
+            scale: 1,
+            dyNorm: 0,
+            advanceNorm: (mappedGlyph.advanceWidth || 0) / unitsPerEm,
+            missing: false
+          }
+        ];
+      }
+    }
+
+    // 5. Glyphes grecs de repli embarqués (NotoSans-Regular normalisé 2048 UPM)
+    const fallbackMap = assets && assets.fallbackGlyphs;
+    if (fallbackMap && fallbackMap[ch]) {
+      const fb = fallbackMap[ch];
+      return [
+        {
+          kind: "fallback",
+          fallbackGlyph: fb,
+          scale: 1,
+          dyNorm: 0,
+          advanceNorm: (fb.advanceWidth || 0) / 2048,
+          missing: false
+        }
+      ];
+    }
+
+    // 6. Repli de compatibilité NFKC (ex. ligatures)
+    if (level < 3) {
+      const nfkc = ch.normalize("NFKC");
+      if (nfkc && nfkc !== ch) {
+        const out = [];
+        for (const part of Array.from(nfkc)) {
+          out.push(...resolveCharRuns(font, part, assets, level + 1));
+        }
+        return out;
+      }
+    }
+
+    // 7. Repli ultime .notdef
+    return [
+      {
+        kind: "font",
+        glyph: direct,
+        scale: 1,
+        dyNorm: 0,
+        advanceNorm: ((direct && direct.advanceWidth) || 0) / unitsPerEm,
+        missing: true
+      }
+    ];
+  }
+
+  function resolveTextRuns(font, text, assets) {
+    const runs = [];
+    for (const ch of Array.from(text || "")) {
+      runs.push(...resolveCharRuns(font, ch, assets, 0));
+    }
+    return runs;
+  }
+
+  function getMissingCharacters(font, text, assetsOverride) {
+    const assets = getAssets(assetsOverride);
+    const missing = [];
+    for (const ch of Array.from(text || "")) {
+      if (/\s/.test(ch) || ch === "\uFEFF") continue;
+      const runs = resolveCharRuns(font, ch, assets, 0);
+      if (runs.some((r) => r.missing)) {
+        missing.push(ch);
+      }
+    }
+    return missing;
+  }
+
+  function getRunCommands(run, fontSize, offsetX, offsetY) {
+    const size = fontSize * run.scale;
+    const dx = offsetX || 0;
+    const dy = (offsetY || 0) + run.dyNorm * fontSize;
+    if (run.kind === "fallback") {
+      const sc = size / 2048;
+      return run.fallbackGlyph.commands.map((c) => {
+        const out = { type: c.type };
+        if (c.x !== undefined) out.x = c.x * sc + dx;
+        if (c.y !== undefined) out.y = c.y * sc + dy;
+        if (c.x1 !== undefined) out.x1 = c.x1 * sc + dx;
+        if (c.y1 !== undefined) out.y1 = c.y1 * sc + dy;
+        if (c.x2 !== undefined) out.x2 = c.x2 * sc + dx;
+        if (c.y2 !== undefined) out.y2 = c.y2 * sc + dy;
+        return out;
+      });
+    }
+    return run.glyph.getPath(dx, dy, size).commands;
+  }
+
+  function computeCommandsBBox(commands) {
+    let x1 = Infinity;
+    let y1 = Infinity;
+    let x2 = -Infinity;
+    let y2 = -Infinity;
+    const include = (x, y) => {
+      if (x < x1) x1 = x;
+      if (x > x2) x2 = x;
+      if (y < y1) y1 = y;
+      if (y > y2) y2 = y;
+    };
+    for (let i = 0; i < commands.length; i++) {
+      const c = commands[i];
+      if (c.x !== undefined && c.y !== undefined) include(c.x, c.y);
+      if (c.x1 !== undefined && c.y1 !== undefined) include(c.x1, c.y1);
+      if (c.x2 !== undefined && c.y2 !== undefined) include(c.x2, c.y2);
+    }
+    return { x1, y1, x2, y2 };
+  }
+
+  function composeRuns(font, runs, fontSize) {
+    const commands = [];
+    const scale = fontSize / (font.unitsPerEm || 2048);
+    let cursor = 0;
+    for (let i = 0; i < runs.length; i++) {
+      const run = runs[i];
+      const cmds = getRunCommands(run, fontSize, cursor, 0);
+      for (let j = 0; j < cmds.length; j++) commands.push(cmds[j]);
+      cursor += run.advanceNorm * fontSize;
+      if (i < runs.length - 1) {
+        const next = runs[i + 1];
+        if (run.kind === "font" && next.kind === "font" && run.scale === 1 && next.scale === 1) {
+          cursor += font.getKerningValue(run.glyph, next.glyph) * scale;
+        }
+      }
+    }
+    return { commands, bbox: computeCommandsBBox(commands) };
+  }
+
+  /**
    * Vectorise un texte droit centré autour de (0, 0) avec réduction auto si dépassement.
    */
-  function buildCenteredTextPath(font, text, defaultFontSize, maxWidth, maxHeight) {
+  function buildCenteredTextPath(font, text, defaultFontSize, maxWidth, maxHeight, assetsOverride) {
     const clean = (text || "").trim();
     if (!clean) return "";
 
+    const assets = getAssets(assetsOverride);
+    const runs = resolveTextRuns(font, clean, assets);
+    if (!runs.length) return "";
+
     let fontSize = defaultFontSize;
-    let path = font.getPath(clean, 0, 0, fontSize);
-    let bb = path.getBoundingBox();
-    let w = bb.x2 - bb.x1;
-    let h = bb.y2 - bb.y1;
+    let composed = composeRuns(font, runs, fontSize);
+    let bb = composed.bbox;
+    const w = bb.x2 - bb.x1;
+    const h = bb.y2 - bb.y1;
 
     if ((w > maxWidth || h > maxHeight) && w > 0 && h > 0) {
       const scale = Math.min(maxWidth / w, maxHeight / h);
       fontSize = Math.max(2.5, defaultFontSize * scale);
-      path = font.getPath(clean, 0, 0, fontSize);
-      bb = path.getBoundingBox();
+      composed = composeRuns(font, runs, fontSize);
+      bb = composed.bbox;
     }
 
-    if (!path.commands.length || !Number.isFinite(bb.x1)) {
+    if (!composed.commands.length || !Number.isFinite(bb.x1)) {
       return "";
     }
 
     const dx = -(bb.x1 + bb.x2) / 2;
     const dy = -(bb.y1 + bb.y2) / 2;
-    return commandsToD(path.commands, (x, y) => ({ x: x + dx, y: y + dy }));
+    return commandsToD(composed.commands, (x, y) => ({ x: x + dx, y: y + dy }));
   }
 
   /**
@@ -226,12 +562,13 @@
   /**
    * Vectorise un texte courbé le long de l'arc supérieur ('top') ou inférieur ('bottom') de l'ellipse.
    */
-  function buildCurvedTextPath(font, text, baseFontSize, rxArc, ryArc, placement, letterSpacingMm) {
+  function buildCurvedTextPath(font, text, baseFontSize, rxArc, ryArc, placement, letterSpacingMm, assetsOverride) {
     const clean = (text || "").trim();
     if (!clean) return "";
 
-    const glyphs = font.stringToGlyphs(clean);
-    if (!glyphs.length) return "";
+    const assets = getAssets(assetsOverride);
+    const runs = resolveTextRuns(font, clean, assets);
+    if (!runs.length) return "";
 
     const safeRx = Math.max(4, rxArc);
     const safeRy = Math.max(4, ryArc);
@@ -244,17 +581,21 @@
         : buildArcLookup(safeRx, safeRy, Math.PI, 0, 360);
 
     function measureAt(size) {
-      const scale = size / font.unitsPerEm;
+      const scale = size / (font.unitsPerEm || 2048);
       const advs = [];
       const steps = [];
       let total = 0;
-      for (let i = 0; i < glyphs.length; i++) {
-        const g = glyphs[i];
-        const adv = (g.advanceWidth || 0) * scale;
+      for (let i = 0; i < runs.length; i++) {
+        const run = runs[i];
+        const adv = run.advanceNorm * size;
         advs.push(adv);
         let step = adv;
-        if (i < glyphs.length - 1) {
-          const kern = font.getKerningValue(g, glyphs[i + 1]) * scale;
+        if (i < runs.length - 1) {
+          const next = runs[i + 1];
+          const kern =
+            run.kind === "font" && next.kind === "font" && run.scale === 1 && next.scale === 1
+              ? font.getKerningValue(run.glyph, next.glyph) * scale
+              : 0;
           step += kern + letterSpacingMm;
         }
         steps.push(step);
@@ -274,8 +615,8 @@
     let cursor = -metrics.total / 2;
     let dOut = "";
 
-    for (let i = 0; i < glyphs.length; i++) {
-      const g = glyphs[i];
+    for (let i = 0; i < runs.length; i++) {
+      const run = runs[i];
       const adv = metrics.advs[i];
       const sCenter = cursor + adv / 2;
       const theta = lookup.thetaAtSignedS(sCenter);
@@ -297,9 +638,9 @@
       const sinA = Math.sin(alpha);
       const halfAdv = adv / 2;
 
-      const gPath = g.getPath(0, 0, fontSize);
-      if (gPath.commands.length) {
-        dOut += commandsToD(gPath.commands, (x, y) => {
+      const cmds = getRunCommands(run, fontSize, 0, 0);
+      if (cmds.length) {
+        dOut += commandsToD(cmds, (x, y) => {
           const lx = x - halfAdv;
           const ly = y;
           return {
@@ -345,7 +686,8 @@
         rx - dTop,
         ry - dTop,
         "top",
-        s.topLetterSpacing
+        s.topLetterSpacing,
+        assets
       );
       const bottomD = buildCurvedTextPath(
         font,
@@ -354,14 +696,16 @@
         rx - dBot,
         ry - dBot,
         "bottom",
-        s.bottomLetterSpacing
+        s.bottomLetterSpacing,
+        assets
       );
       const nomD = buildCenteredTextPath(
         font,
         item && item.nom ? item.nom : "",
         s.centerFontSize,
         s.ellipseWidth * 0.78,
-        s.ellipseHeight * 0.4
+        s.ellipseHeight * 0.4,
+        assets
       );
 
       const engravingPaths = [topD, nomD, bottomD].filter(Boolean);
@@ -389,7 +733,8 @@
       item && item.buque ? item.buque : "",
       s.centerFontSize,
       s.ellipseWidth * 0.78,
-      Math.min(s.ellipseHeight * 0.34, centerAvailableH)
+      Math.min(s.ellipseHeight * 0.34, centerAvailableH),
+      assets
     );
 
     const makeAmtradsTransform = (cyPos) => {
@@ -865,6 +1210,7 @@
     DEFAULT_SETTINGS,
     mergeSettings,
     getFont,
+    getMissingCharacters,
     buildCenteredTextPath,
     buildCurvedTextPath,
     buildEllipseFaceElements,
